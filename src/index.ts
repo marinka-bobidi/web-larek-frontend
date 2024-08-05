@@ -63,6 +63,11 @@ export interface IBasket {
 	submit: ISubmitPurchase; //cм.66
 }
 
+// Продукты хранящиеся в корзине
+export interface IBasketChoice {
+	choosen: string[];
+}
+
 // Действия оформить, далее, оплатить.
 export interface ISubmitPurchase {
 	submitBasket(): void;
@@ -105,4 +110,11 @@ export interface IFormSuccessClose {
 export interface IApi {
 	getProductList: () => Promise<IProduct[]>;
 	submitPurchase: (form: IForms, products: string[]) => Promise<any>;
+}
+
+// Управление событиями
+export interface IEventEmitter {
+	on(): void;
+	off(): void;
+	emit(): void;
 }
