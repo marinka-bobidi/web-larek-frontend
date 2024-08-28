@@ -1,9 +1,9 @@
 import './scss/styles.scss';
 
 import {
+	ModalPurchase,
 	ModalWindow,
 	PreviewModal,
-	ModalPurchase,
 } from './components/base/modals';
 import { EventEmitter } from './components/base/events';
 import { ensureElement, cloneTemplate } from './utils/utils';
@@ -11,11 +11,8 @@ import { Basket } from './components/common/Basket';
 import { Card, Product } from './components/common/Card';
 import { API_URL, CDN_URL } from './utils/constants';
 import { API, ProductResponse } from './components/common/API';
-
-//Шаблоны
-const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
-const cardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
-const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
+import { Validation, ValidationForm } from './components/common/Validation ';
+import { Information } from './components/common/User';
 
 //ProductAPI
 const ProductAPI = new API(API_URL);
@@ -56,6 +53,7 @@ ProductAPI.getProductList()
 	});
 
 //CardModal
+const cardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cardWindow = document.querySelector('.card_full');
 const cardModalHTML = cardWindow.closest('.modal') as HTMLElement;
 const cardAddButton = cardModalHTML.querySelector(
@@ -108,14 +106,10 @@ cardAddButton.addEventListener('click', () => {
 const basketWindow = document.querySelector('.basket');
 const basketModalHTML = basketWindow.closest('.modal') as HTMLElement;
 const basketModal = new ModalWindow(basketModalHTML, 'Basket');
-const basketList = basketWindow.querySelector('.basket__list') as HTMLElement;
 const basketPurchase = basketWindow.querySelector(
 	'.button'
 ) as HTMLButtonElement;
-
-const basket = new Basket();
-
-//BasketButton
+const basket = new Basket(basketPurchase);
 const basketButton = document.querySelector('.header__basket');
 const basketButtonClose = basketModalHTML.querySelector('.modal__close');
 
@@ -127,7 +121,7 @@ const dataBasket = {
 	titleClass: '.card__title',
 	priceClass: '.card__price',
 	totalClass: '.basket__price',
-	button: '.basket__item-delete',
+	buttonClass: '.basket__item-delete',
 };
 
 // EventEmitter
@@ -135,24 +129,15 @@ const emiterBasket = new EventEmitter();
 emiterBasket.on('open_button', () => {
 	basketModal.open();
 	basket.render(dataBasket);
+	basket.inactive();
 });
 
 emiterBasket.on('close_button', basketModal.close);
 emiterBasket.on('delete_button', basket.clearBasket);
-
 basketButton.addEventListener('click', () => {
 	emiterBasket.emit('open_button');
-	const basketDeleteButtons = basketList.querySelectorAll(
-		'.basket__item-delete'
-	);
 	emiterBasket.emit('delete_button');
 	basket.render(dataBasket);
-	basketDeleteButtons.forEach((button) => {
-		button.addEventListener('click', () => {
-			emiterBasket.emit('delete_button');
-			basket.render(dataBasket);
-		});
-	});
 });
 
 basketButtonClose.addEventListener('click', () => {
@@ -162,18 +147,42 @@ basketButtonClose.addEventListener('click', () => {
 // PurchaseModal
 const orderPaymentWindow = document.querySelector('.order__payment');
 const modalPaymentHTML = orderPaymentWindow.closest('.modal') as HTMLElement;
-const modalPayment = new ModalWindow(modalPaymentHTML, 'Payment');
+const modalPayment = new ModalPurchase(modalPaymentHTML, 'Payment');
 const paymentButtonClose = modalPaymentHTML.querySelector('.modal__close');
-const paymentPurchase = modalPaymentHTML.querySelector('.button__onwards');
+const paymentPurchase = modalPaymentHTML.querySelector(
+	'.button__onwards'
+) as HTMLButtonElement;
+
+// PushInformation
+const information = new Information();
 
 // EventEmitter
 const emiterPayment = new EventEmitter();
 emiterPayment.on('purchase_button', modalPayment.open);
 emiterPayment.on('close_button', modalPayment.close);
 
+const orderButtons = modalPaymentHTML.querySelector('.order__buttons');
+const orderButtonCard = orderButtons.querySelector('button[name="card"]');
+const orderButtonCash = orderButtons.querySelector('button[name="cash"]');
+
+orderButtonCard.addEventListener('click', () => {
+	orderButtonCash.classList.remove('button_selected');
+	orderButtonCard.classList.add('button_selected');
+	modalPayment.payment = 'Онлайн';
+});
+
+orderButtonCash.addEventListener('click', () => {
+	orderButtonCard.classList.remove('button_selected');
+	orderButtonCash.classList.add('button_selected');
+	modalPayment.payment = 'При получении';
+});
+
 basketPurchase.addEventListener('click', () => {
 	emiterBasket.emit('close_button');
 	emiterPayment.emit('purchase_button');
+	const id_list = basket.items_to_id();
+	information.itemsID = id_list;
+	information.totalPrice = basket.total;
 });
 
 paymentButtonClose.addEventListener('click', () => {
@@ -185,7 +194,9 @@ const orderInfoWindow = document.querySelector('.order__info');
 const modalInfoHTML = orderInfoWindow.closest('.modal') as HTMLElement;
 const modalInfo = new ModalWindow(modalInfoHTML, 'Info');
 const infoButtonClose = modalInfoHTML.querySelector('.modal__close');
-const infoPurchase = modalInfoHTML.querySelector('.button');
+const infoPurchase = modalInfoHTML.querySelector(
+	'.button'
+) as HTMLButtonElement;
 
 // EventEmitter
 const emiterInfo = new EventEmitter();
@@ -196,6 +207,8 @@ paymentPurchase.addEventListener('click', (evt) => {
 	evt.preventDefault();
 	emiterPayment.emit('close_button');
 	emiterInfo.emit('purchase_button');
+	information.adress = adressInput.value;
+	information.payment = modalPayment.payment;
 });
 
 infoButtonClose.addEventListener('click', () => {
@@ -208,6 +221,7 @@ const modalSuccessHTML = orderSuccessWindow.closest('.modal') as HTMLElement;
 const modalSuccess = new ModalWindow(modalSuccessHTML, 'Info');
 const successButtonClose = modalSuccessHTML.querySelector('.modal__close');
 const successButton = modalSuccessHTML.querySelector('.button');
+const successDescription = modalSuccessHTML.querySelector('.film__description');
 
 // EventEmitter
 const emiterSuccess = new EventEmitter();
@@ -217,7 +231,19 @@ emiterSuccess.on('close_button', modalSuccess.close);
 infoPurchase.addEventListener('click', (evt) => {
 	evt.preventDefault();
 	emiterInfo.emit('close_button');
-	emiterSuccess.emit('purchase_button');
+	information.email = emailInput.value;
+	information.phone = phoneInput.value;
+	ProductAPI.submitPurchase(information)
+		.then((res: Promise<any>) => {
+			emiterSuccess.emit('purchase_button');
+			successDescription.textContent = 'Списано ' + basket.total + ' синапсов';
+			basket.basketSubmitClear();
+			basket.headerInsertion('.header__basket-counter');
+			console.log(information);
+		})
+		.catch((res) => {
+			console.log(res);
+		});
 });
 
 successButtonClose.addEventListener('click', () => {
@@ -226,4 +252,68 @@ successButtonClose.addEventListener('click', () => {
 
 successButton.addEventListener('click', () => {
 	emiterSuccess.emit('close_button');
+});
+
+//Validation
+const adressInput = modalPaymentHTML.querySelector(
+	'.form__input'
+) as HTMLInputElement;
+const emailInput = modalInfoHTML.querySelector(
+	'.email__input'
+) as HTMLInputElement;
+const phoneInput = modalInfoHTML.querySelector(
+	'.phone__input'
+) as HTMLInputElement;
+
+const adressValidity = new Validation(
+	adressInput,
+	'Adress',
+	'Введите адрес',
+	'.adress__error-message'
+);
+const emailValidity = new Validation(
+	emailInput,
+	'Email',
+	'Введите почту',
+	'.email__error-message'
+);
+const phoneValidity = new Validation(
+	phoneInput,
+	'Phone',
+	'Введите номер телефона',
+	'.phone__error-message'
+);
+
+const paymentValidity = new ValidationForm([adressValidity], paymentPurchase);
+const infoValidity = new ValidationForm(
+	[emailValidity, phoneValidity],
+	infoPurchase
+);
+const allCloseButtons = document.querySelectorAll('.modal__close');
+allCloseButtons.forEach((button) => {
+	button.addEventListener('click', () => {
+		paymentValidity.clearFields();
+		infoValidity.clearFields();
+		adressValidity.valid();
+		emailValidity.valid();
+		phoneValidity.valid();
+	});
+});
+
+emiterPayment.on('input_validity_payment', adressValidity.valid);
+emiterInfo.on('input_validity_info', emailValidity.valid);
+emiterInfo.on('input_validity_info', phoneValidity.valid);
+emiterPayment.on('input_validity_payment', paymentValidity.check);
+emiterInfo.on('input_validity_info', infoValidity.check);
+
+adressInput.addEventListener('input', () => {
+	emiterPayment.emit('input_validity_payment');
+});
+
+emailInput.addEventListener('input', () => {
+	emiterInfo.emit('input_validity_info');
+});
+
+phoneInput.addEventListener('input', () => {
+	emiterInfo.emit('input_validity_info');
 });

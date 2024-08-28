@@ -1,5 +1,7 @@
-import { IApi, IForms, IProductResponse, IProduct } from '../../types';
+import { IApi, IProductResponse, IProduct } from '../../types';
+
 import { Api } from '../base/api';
+import { Information } from './User';
 
 export class API extends Api implements IApi {
 	url: string;
@@ -13,22 +15,26 @@ export class API extends Api implements IApi {
 		return this.get('/product');
 	};
 
-	submitPurchase: (form: IForms, products: string[]) => Promise<any>;
+	submitPurchase = (data: Information) => {
+		let englishPayment = String();
+		if (data.payment == 'Онлайн') {
+			englishPayment = 'online';
+		} else {
+			englishPayment = 'cash';
+		}
+		const data_api = {
+			payment: englishPayment,
+			email: data.email,
+			phone: data.phone,
+			address: data.adress,
+			total: Number(data.totalPrice),
+			items: data.itemsID,
+		};
+		return this.post('/order', data_api);
+	};
 }
 
 export class ProductResponse implements IProductResponse {
 	total: number;
 	items: IProduct[];
-
-	//Class
-	titleClass: string;
-	categoryClass: string;
-	imageClass: string;
-	priceClass: string;
-	discription: string;
-	//Html
-	titleHTML: HTMLElement;
-	categoryHTML: HTMLElement;
-	imageHTML: HTMLImageElement;
-	priceHTML: HTMLElement;
 }

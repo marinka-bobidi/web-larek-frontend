@@ -1,11 +1,16 @@
+import {
+	IPreviewModal,
+	TPayment,
+	IModalWindow,
+	IModalPurchase,
+} from '../../types';
 import { CDN_URL } from '../../utils/constants';
-import { Basket } from '../common/Basket';
 import { Product } from '../common/Card';
 
-export class ModalWindow {
+export class ModalWindow implements IModalWindow {
 	title: string;
 	container: HTMLElement;
-	overlay: HTMLElement;
+	// overlay: HTMLElement;
 
 	constructor(container: HTMLElement, title: string) {
 		this.container = container;
@@ -24,7 +29,7 @@ export class ModalWindow {
 	};
 }
 
-export class PreviewModal extends ModalWindow {
+export class PreviewModal extends ModalWindow implements IPreviewModal {
 	product: Product;
 	button: HTMLButtonElement;
 
@@ -71,11 +76,9 @@ export class PreviewModal extends ModalWindow {
 	};
 }
 
-export class ModalPurchase extends ModalWindow {
-	conteiner: Basket;
-
+export class ModalPurchase extends ModalWindow implements IModalPurchase {
+	payment: TPayment;
 	constructor(container: HTMLElement, title: string) {
 		super(container, title);
 	}
-	SubmitPurchase = () => {};
 }

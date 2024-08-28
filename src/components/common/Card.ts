@@ -1,4 +1,4 @@
-import { ICard, IProduct, ICardEvt, TCardCategory } from '../../types';
+import { ICard, IProduct, TCardCategory } from '../../types';
 
 export class Product implements IProduct {
 	id: string;
@@ -26,7 +26,6 @@ export class Product implements IProduct {
 export class Card implements ICard {
 	template: HTMLTemplateElement;
 	product: IProduct;
-	events: ICardEvt;
 
 	//Class
 	titleClass: string;

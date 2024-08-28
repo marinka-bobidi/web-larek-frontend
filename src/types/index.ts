@@ -1,19 +1,13 @@
 import { Product } from '../components/common/Card';
 
-// Главная страница
-export interface IView {
-	list: HTMLElement;
-	basket: HTMLElement;
-}
-
 // Продукт страницы
 export interface IProduct {
 	id: string;
 	image: string;
-	category: TCardCategory; // Категории продукта страницы (см.19)
 	title: string;
-	description?: string; // на случай если нет описания товара
+	category: TCardCategory;
 	price: string;
+	description?: string;
 }
 
 // Категории продукта страницы
@@ -26,90 +20,91 @@ export type TCardCategory =
 
 // Карточка с продуктом страницы
 export interface ICard {
+	template: HTMLTemplateElement;
 	product: IProduct;
-	events: ICardEvt; //см.33
+	getInformation(
+		title: string,
+		category: string,
+		image: string,
+		price: string
+	): void;
 }
 
-// Описание события "клик по карточке"
-export interface ICardEvt {
-	onClick: (event: MouseEvent) => void;
+// Модальные окна
+export interface IModalWindow {
+	title: string;
+	container: HTMLElement;
+	open(): void;
+	close(): void;
 }
 
 // Карточка продукта в модальном окне
-export interface ICardModal {
-	product: ICard[];
-	buttonCard: string;
-	events: IBasketAction; //cм.45
+export interface IPreviewModal {
+	product: Product;
+	button: HTMLButtonElement;
+	transform(product: Product): void;
+	render(data: {
+		titleClass: string;
+		categoryClass: string;
+		imageClass: string;
+		priceClass: string;
+		descriptionClass: string;
+	}): void;
+	add(items: Product[]): void;
 }
 
-// Контроль корзины "клик по кнопке в карточке"
-export interface IBasketAction {
-	add(product: string): void;
-	remove(product: string): void;
-}
-
-// Каталог товаров на главной странице
-export interface ICardList {
-	catalog: ICard[];
-	total: number;
+// Интерфейс объекта данных
+export interface IDataBasket {
+	container: string;
+	template: string;
+	headerClass: string;
+	titleClass: string;
+	indexClass: string;
+	priceClass: string;
+	totalClass: string;
+	buttonClass: string;
 }
 
 // Содержание корзины
 export interface IBasket {
 	items: Product[];
-	total: number | string;
-	button: string;
-	events: IBasketAction; //см.45
-	submit: ISubmitPurchase; //cм.66
+	total: string;
+	button: HTMLButtonElement;
+	basketSubmitClear(): void;
+	deleteBasket(
+		element: HTMLElement,
+		item: Product,
+		dataBasket: IDataBasket
+	): void;
+	clearBasket(): void;
+	render(dataBasket: IDataBasket): void;
+	headerInsertion(indexHeaderClass: string): void;
+	inactive(): void;
+	items_to_id(): string[];
 }
 
-// Продукты хранящиеся в корзине
-export interface IBasketChoice {
-	choosen: string[];
-}
-
-// Действия оформить, далее, оплатить.
-export interface ISubmitPurchase {
-	submitBasket(): void;
-	submitPaymentAdress(): void;
-	submitPurchase(): void;
-}
-
-// Формы
-export interface IForms {
-	payment: TPayment; // Способы оплаты (см.82)
-	address: string;
-	email: string;
-	phone: string;
+// Модальное окно покупки
+export interface IModalPurchase {
+	payment: TPayment;
 }
 
 // Способы оплаты
-export type TPayment = 'онлайн' | 'при получении';
-
-// Валидация форм
-export interface IFormValidation {
-	errors: string[];
-	valid: boolean;
-}
-
-// Окно успешного оформления заказа
-export interface IFormSuccess {
-	successUrl: string;
-	success: string;
-	summary: number;
-	buttonSuccess: string;
-	event: IFormSuccessClose; //см.99
-}
-
-// Описание события успешного оформления заказа
-export interface IFormSuccessClose {
-	onClick: (event: MouseEvent) => void;
-}
+export type TPayment = 'Онлайн' | 'При получении';
 
 // API
 export interface IApi {
 	getProductList: () => Promise<object>;
-	submitPurchase: (form: IForms, products: string[]) => Promise<any>;
+	submitPurchase: (data: IInformation) => Promise<any>;
+}
+
+// Информация о покупке
+export interface IInformation {
+	itemsID: string[];
+	totalPrice: string;
+	payment: string;
+	adress: string;
+	email: string;
+	phone: string;
 }
 
 // Ответ API
@@ -118,9 +113,23 @@ export interface IProductResponse {
 	items: IProduct[];
 }
 
-// Управление событиями
-export interface IEventEmitter {
-	on(): void;
-	off(): void;
-	emit(): void;
+// Интерфейс валидации инпутов
+export interface IValidation {
+	input: HTMLInputElement;
+	span: string;
+	name: string;
+	message: string;
+	errors: boolean;
+	active(): void;
+	inactive(): void;
+	valid(): void;
+}
+
+// Интерфейс валидации форм
+export interface IValidationForm {
+	input: IValidation[];
+	button: HTMLButtonElement;
+	invalid: boolean;
+	check(): void;
+	clearFields(): void;
 }
