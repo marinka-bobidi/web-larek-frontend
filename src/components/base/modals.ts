@@ -10,7 +10,6 @@ import { Product } from '../common/Card';
 export class ModalWindow implements IModalWindow {
 	title: string;
 	container: HTMLElement;
-	// overlay: HTMLElement;
 
 	constructor(container: HTMLElement, title: string) {
 		this.container = container;
@@ -21,6 +20,12 @@ export class ModalWindow implements IModalWindow {
 		this.container.classList.add('modal_active');
 		this.container.style.position = 'fixed';
 		document.body.style.overflow = 'hidden';
+
+		this.container.addEventListener('click', (evt) => {
+			if (evt.target === this.container) {
+				this.close();
+			}
+		});
 	};
 
 	close = () => {
@@ -44,7 +49,7 @@ export class PreviewModal extends ModalWindow implements IPreviewModal {
 	transform = (product: Product) => {
 		this.product = product;
 	};
-	render = (data: {
+	render = (cardClassNames: {
 		titleClass: string;
 		categoryClass: string;
 		imageClass: string;
@@ -52,11 +57,15 @@ export class PreviewModal extends ModalWindow implements IPreviewModal {
 		descriptionClass: string;
 	}) => {
 		const modal = document.querySelector('.card_full');
-		const titleHTML = modal.querySelector(data.titleClass);
-		const categoryHTML = modal.querySelector(data.categoryClass);
-		const imageHTML = modal.querySelector(data.imageClass) as HTMLImageElement;
-		const priceHTML = modal.querySelector(data.priceClass);
-		const descriptionHTML = modal.querySelector(data.descriptionClass);
+		const titleHTML = modal.querySelector(cardClassNames.titleClass);
+		const categoryHTML = modal.querySelector(cardClassNames.categoryClass);
+		const imageHTML = modal.querySelector(
+			cardClassNames.imageClass
+		) as HTMLImageElement;
+		const priceHTML = modal.querySelector(cardClassNames.priceClass);
+		const descriptionHTML = modal.querySelector(
+			cardClassNames.descriptionClass
+		);
 
 		titleHTML.textContent = this.product.title;
 		categoryHTML.textContent = this.product.category;

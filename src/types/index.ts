@@ -22,7 +22,7 @@ export type TCardCategory =
 export interface ICard {
 	template: HTMLTemplateElement;
 	product: IProduct;
-	getInformation(
+	setInformation(
 		title: string,
 		category: string,
 		image: string,
@@ -54,7 +54,7 @@ export interface IPreviewModal {
 }
 
 // Интерфейс объекта данных
-export interface IDataBasket {
+export interface IBasketClassNames {
 	container: string;
 	template: string;
 	headerClass: string;
@@ -74,13 +74,13 @@ export interface IBasket {
 	deleteBasket(
 		element: HTMLElement,
 		item: Product,
-		dataBasket: IDataBasket
+		dataBasket: IBasketClassNames
 	): void;
 	clearBasket(): void;
-	render(dataBasket: IDataBasket): void;
+	render(dataBasket: IBasketClassNames): void;
 	headerInsertion(indexHeaderClass: string): void;
 	inactive(): void;
-	items_to_id(): string[];
+	itemsToId(): string[];
 }
 
 // Модальное окно покупки

@@ -31,7 +31,7 @@ ProductAPI.getProductList()
 			);
 
 			card.addEventListener('click', () => {
-				emiterCard.emit('open_button', product);
+				emiterCard.emit(openButton, product);
 			});
 
 			let textPrice = String(product.price) + ' ' + 'синапсов';
@@ -40,7 +40,7 @@ ProductAPI.getProductList()
 			}
 
 			cardList.append(card);
-			cardClone.getInformation(
+			cardClone.setInformation(
 				product.title,
 				product.category,
 				CDN_URL + product.image,
@@ -52,6 +52,12 @@ ProductAPI.getProductList()
 		console.error(err);
 	});
 
+//EventConstants
+const addButton = 'add_button';
+const closeButton = 'close_button';
+const openButton = 'open_button';
+const deleteButton = 'delete_button';
+
 //CardModal
 const cardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cardWindow = document.querySelector('.card_full');
@@ -62,8 +68,8 @@ const cardAddButton = cardModalHTML.querySelector(
 const cardModal = new PreviewModal(cardModalHTML, 'Card', cardAddButton);
 const cardButtonClose = cardModalHTML.querySelector('.modal__close');
 
-// data
-const data = {
+//cardClassNames
+const cardClassNames = {
 	titleClass: '.card__title',
 	categoryClass: '.card__category',
 	priceClass: '.card__price',
@@ -73,10 +79,10 @@ const data = {
 
 //EventEmitter
 const emiterCard = new EventEmitter();
-emiterCard.on('open_button', (product: Product) => {
+emiterCard.on(openButton, (product: Product) => {
 	cardModal.transform(product);
 	cardModal.open();
-	cardModal.render(data);
+	cardModal.render(cardClassNames);
 	if (basket.items.includes(cardModal.product)) {
 		cardAddButton.disabled = true;
 		cardAddButton.textContent = 'В корзине';
@@ -86,18 +92,18 @@ emiterCard.on('open_button', (product: Product) => {
 	}
 });
 
-emiterCard.on('close_button', cardModal.close);
-emiterCard.on('add_button', cardModal.add);
-emiterCard.on('add_button', () => {
+emiterCard.on(closeButton, cardModal.close);
+emiterCard.on(addButton, cardModal.add);
+emiterCard.on(addButton, () => {
 	basket.headerInsertion('.header__basket-counter');
 });
 
 cardButtonClose.addEventListener('click', () => {
-	emiterCard.emit('close_button');
+	emiterCard.emit(closeButton);
 });
 
 cardAddButton.addEventListener('click', () => {
-	emiterCard.emit('add_button', basket.items);
+	emiterCard.emit(addButton, basket.items);
 	cardAddButton.disabled = true;
 	cardAddButton.textContent = 'В корзине';
 });
@@ -113,7 +119,7 @@ const basket = new Basket(basketPurchase);
 const basketButton = document.querySelector('.header__basket');
 const basketButtonClose = basketModalHTML.querySelector('.modal__close');
 
-const dataBasket = {
+const basketClassNames = {
 	container: '.basket__list',
 	template: '#card-basket',
 	headerClass: '.header__basket-counter',
@@ -126,22 +132,22 @@ const dataBasket = {
 
 // EventEmitter
 const emiterBasket = new EventEmitter();
-emiterBasket.on('open_button', () => {
+emiterBasket.on(openButton, () => {
 	basketModal.open();
-	basket.render(dataBasket);
+	basket.render(basketClassNames);
 	basket.inactive();
 });
 
-emiterBasket.on('close_button', basketModal.close);
-emiterBasket.on('delete_button', basket.clearBasket);
+emiterBasket.on(closeButton, basketModal.close);
+emiterBasket.on(deleteButton, basket.clearBasket);
 basketButton.addEventListener('click', () => {
-	emiterBasket.emit('open_button');
-	emiterBasket.emit('delete_button');
-	basket.render(dataBasket);
+	emiterBasket.emit(openButton);
+	emiterBasket.emit(deleteButton);
+	basket.render(basketClassNames);
 });
 
 basketButtonClose.addEventListener('click', () => {
-	emiterBasket.emit('close_button');
+	emiterBasket.emit(closeButton);
 });
 
 // PurchaseModal
@@ -159,7 +165,7 @@ const information = new Information();
 // EventEmitter
 const emiterPayment = new EventEmitter();
 emiterPayment.on('purchase_button', modalPayment.open);
-emiterPayment.on('close_button', modalPayment.close);
+emiterPayment.on(closeButton, modalPayment.close);
 
 const orderButtons = modalPaymentHTML.querySelector('.order__buttons');
 const orderButtonCard = orderButtons.querySelector('button[name="card"]');
@@ -178,15 +184,15 @@ orderButtonCash.addEventListener('click', () => {
 });
 
 basketPurchase.addEventListener('click', () => {
-	emiterBasket.emit('close_button');
+	emiterBasket.emit(closeButton);
 	emiterPayment.emit('purchase_button');
-	const id_list = basket.items_to_id();
-	information.itemsID = id_list;
+	const idList = basket.itemsToId();
+	information.itemsID = idList;
 	information.totalPrice = basket.total;
 });
 
 paymentButtonClose.addEventListener('click', () => {
-	emiterPayment.emit('close_button');
+	emiterPayment.emit(closeButton);
 });
 
 // InfoModal
@@ -201,18 +207,18 @@ const infoPurchase = modalInfoHTML.querySelector(
 // EventEmitter
 const emiterInfo = new EventEmitter();
 emiterInfo.on('purchase_button', modalInfo.open);
-emiterInfo.on('close_button', modalInfo.close);
+emiterInfo.on(closeButton, modalInfo.close);
 
 paymentPurchase.addEventListener('click', (evt) => {
 	evt.preventDefault();
-	emiterPayment.emit('close_button');
+	emiterPayment.emit(closeButton);
 	emiterInfo.emit('purchase_button');
 	information.adress = adressInput.value;
 	information.payment = modalPayment.payment;
 });
 
 infoButtonClose.addEventListener('click', () => {
-	emiterInfo.emit('close_button');
+	emiterInfo.emit(closeButton);
 });
 
 // SuccessModal
@@ -226,11 +232,11 @@ const successDescription = modalSuccessHTML.querySelector('.film__description');
 // EventEmitter
 const emiterSuccess = new EventEmitter();
 emiterSuccess.on('purchase_button', modalSuccess.open);
-emiterSuccess.on('close_button', modalSuccess.close);
+emiterSuccess.on(closeButton, modalSuccess.close);
 
 infoPurchase.addEventListener('click', (evt) => {
 	evt.preventDefault();
-	emiterInfo.emit('close_button');
+	emiterInfo.emit(closeButton);
 	information.email = emailInput.value;
 	information.phone = phoneInput.value;
 	ProductAPI.submitPurchase(information)
@@ -247,11 +253,11 @@ infoPurchase.addEventListener('click', (evt) => {
 });
 
 successButtonClose.addEventListener('click', () => {
-	emiterSuccess.emit('close_button');
+	emiterSuccess.emit(closeButton);
 });
 
 successButton.addEventListener('click', () => {
-	emiterSuccess.emit('close_button');
+	emiterSuccess.emit(closeButton);
 });
 
 //Validation

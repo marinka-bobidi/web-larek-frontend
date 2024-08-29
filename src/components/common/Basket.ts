@@ -1,4 +1,4 @@
-import { IBasket, IDataBasket } from '../../types';
+import { IBasket, IBasketClassNames } from '../../types';
 import { cloneTemplate } from '../../utils/utils';
 import { Product } from './Card';
 
@@ -28,12 +28,12 @@ export class Basket implements IBasket {
 	deleteBasket = (
 		element: HTMLElement,
 		item: Product,
-		dataBasket: IDataBasket
+		basketClassNames: IBasketClassNames
 	) => {
 		this.items = this.items.filter((obj) => obj.id !== item.id);
-		this.headerInsertion(dataBasket.headerClass);
+		this.headerInsertion(basketClassNames.headerClass);
 		this.clearBasket();
-		this.render(dataBasket);
+		this.render(basketClassNames);
 	};
 
 	clearBasket = () => {
@@ -41,19 +41,23 @@ export class Basket implements IBasket {
 		element.innerHTML = '';
 	};
 
-	render = (dataBasket: IDataBasket) => {
+	render = (basketClassNames: IBasketClassNames) => {
 		this.items.forEach((item, index) => {
-			const conteinerBasket = document.querySelector(dataBasket.container);
-			const templateHTML = cloneTemplate(dataBasket.template);
-			const indexHTML = templateHTML.querySelector(dataBasket.indexClass);
-			const titleHTML = templateHTML.querySelector(dataBasket.titleClass);
-			const priceHTML = templateHTML.querySelector(dataBasket.priceClass);
-			const buttonHTML = templateHTML.querySelector(dataBasket.buttonClass);
+			const conteinerBasket = document.querySelector(
+				basketClassNames.container
+			);
+			const templateHTML = cloneTemplate(basketClassNames.template);
+			const indexHTML = templateHTML.querySelector(basketClassNames.indexClass);
+			const titleHTML = templateHTML.querySelector(basketClassNames.titleClass);
+			const priceHTML = templateHTML.querySelector(basketClassNames.priceClass);
+			const buttonHTML = templateHTML.querySelector(
+				basketClassNames.buttonClass
+			);
 
 			titleHTML.textContent = item.title;
 			indexHTML.textContent = String(index + 1);
 			buttonHTML.addEventListener('click', () => {
-				this.deleteBasket(templateHTML, item, dataBasket);
+				this.deleteBasket(templateHTML, item, basketClassNames);
 				this.inactive();
 			});
 			if (item.price !== null) {
@@ -63,7 +67,7 @@ export class Basket implements IBasket {
 			}
 			conteinerBasket.append(templateHTML);
 		});
-		const totalHTML = document.querySelector(dataBasket.totalClass);
+		const totalHTML = document.querySelector(basketClassNames.totalClass);
 		totalHTML.textContent = this.sum();
 	};
 
@@ -75,18 +79,19 @@ export class Basket implements IBasket {
 	inactive = () => {
 		const paymentButtonHTML = this.button;
 		paymentButtonHTML.disabled = false;
-		if (this.items.length == 0) {
+		if (this.items.length == 0 || this.sum() == 'Бесценно') {
 			paymentButtonHTML.disabled = true;
 		}
 	};
 	constructor(button: HTMLButtonElement) {
 		this.button = button;
 	}
-	items_to_id = () => {
-		const id_list: string[] = [];
+
+	itemsToId = () => {
+		const idList: string[] = [];
 		this.items.forEach((item) => {
-			id_list.push(item.id);
+			idList.push(item.id);
 		});
-		return id_list;
+		return idList;
 	};
 }

@@ -61,7 +61,7 @@ export class Card implements ICard {
 	}
 
 	// Присвоение
-	getInformation = (
+	setInformation = (
 		title: string,
 		category: string,
 		image: string,
